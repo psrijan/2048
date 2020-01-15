@@ -1,4 +1,4 @@
-package com.srijan.views;
+package com.srijan.test.views;
 
 import javax.swing.*;
 

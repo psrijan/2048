@@ -1,20 +1,26 @@
 package com.srijan.core.logic;
 
+import lombok.Getter;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 public class BoardAction {
 
-    private BoardModel boardModel = new BoardModel(4);
+    private BoardModel boardModel;
     private static final Integer DEFAULT_VALUE = -1;
 
     public BoardAction() {
+        boardModel= new BoardModel(4);
+    }
+
+    public BoardModel getBoardModel() {
+        return boardModel;
     }
 
     public GameState applyMove(Moves move) {
         System.out.println(move.toString());
-
         boardModel.printState();
 
         if (move.equals(Moves.LEFT)) {
