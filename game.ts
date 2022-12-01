@@ -37,182 +37,40 @@ class Colors {
     public static BACKGROUND_COLOR = "";
     public static BOARD_BACKGROUND = "#B38B6D";
     public static BOARD_TILE = "#d2b48c";
+    public static BLACK = "#000";
     
     public static TEXT_LIGHT = "#FFF";
     public static tileColorMap = {2 : "", 4 : "", 8: "", 16 : ""};
     public static tileTextColorMap = {2 : "", 4: "", 8: "", 16: ""};
-
-}
-
-class GameObjPositions {
-
-    objPosMap : Map<GameState, Array<ObjPos>> =  new Map<GameState,  Array<ObjPos>>(); 
-
-    constructor() {
-    }
+    public static colorTileArr = [["#301A4B", Colors.WHITE], ["#6DB1BF", Colors.WHITE], ["#FFAECC", Colors.BLACK], ["#3F6C51", Colors.WHITE], ["#521B95", Colors.WHITE], ["#23525D", Colors.WHITE], ["#917A7D", Colors.WHITE], ["#8E535", Colors.WHITE]];
 
 
-    putItems(state : GameState , objPos : ObjPos ) {
-        let hasState : boolean = this.objPosMap.has(state);
-        let objList : Array<ObjPos>= [];
-        if (hasState) {
-            objList = this.objPosMap.get(state)!;
-        } else {
-            objList = [];
-        }
-
-        objList?.push(objPos);
-        this.objPosMap.set(state, objList!);
-    }
-
-    checkIfObjectClicked(gameState : GameState, xPos : number, yPos : number) {
-        let objList : ObjPos[] = this.objPosMap.get(gameState)!;
-
-        if (objList == undefined) {
-            console.log("WARNING: Object List for ", gameState, " is undefined");
-        }
-
-        let matchingObj : ObjPos[] = objList.filter(val => val.checkIfPositionFallsInObject(xPos, yPos));
-
-        if (matchingObj.length > 0) {
-            return matchingObj[0].getObjIdentifier();
-        } else {
-            return ObjectIdentifier.NONE;
-        }
-    }
-}
-
-/**
- * Identifier to classify what type of object it is 
- */
-enum ObjectIdentifier {
-    NEW_GAME_BUTTON,
-    CONTINUE_BUTTON,
-    NONE
-}
-
-/**
- * Class that identifies the objects x and y position
- * this is used for checking if the button is clicked
- * based on the x and y position. 
- */
-class ObjPos {
-
-    constructor(private xPos: number, 
-        private yPos : number, 
-        private width: number, 
-        private height: number, 
-        private isClickable? : boolean,
-        private objIdentifier? : ObjectIdentifier) {
-    }
-
-
-    /**
-     * Idnetifies if these objects can be clicked 
-     */
-    getIsClickable() {
-        return this.isClickable;
-    }
-
-    checkIfPositionFallsInObject(x, y) {
-        if (x > this.xPos && y < this.yPos && x < this.xPos + this.width && y < this.yPos + this.height) {
-            return true;
-        }
-        return false;
-    }
-
-    getObjIdentifier() : ObjectIdentifier {
-        if (this.objIdentifier == null || this.objIdentifier == undefined) 
-            console.log("OOPS: Cannot find Object identifier for the clicked object. Something is not right");
-        return this.objIdentifier!;
-    }
 }
 
 enum GameState {
-    MAIN_MENU,
-    GAME,
-    SETTINGS,
-    CLOSE,
-    HOW_TO_PLAY
+    GAME
 }
 
 class Game {
 
     board : Board;
     gameState : GameState;
-    gameObjPosition : GameObjPositions;
+    CANVAS_OFFSET_X : number = 0;
+    CANVAS_OFFSET_Y : number = 0; 
 
-
-    constructor(gameState : GameState = GameState.MAIN_MENU) {
+    constructor(gameState : GameState = GameState.GAME) {
         this.gameState = gameState;
         this.board = new Board();
-        this.gameObjPosition = new GameObjPositions();
     }
 
     initialize() {
         this.addKeyPressEvent();
-        this.createViews();
-        this.createEventListeners();
+        this.createGameBoard();
     }
 
-    createEventListeners() {
-        
-        let c = document.getElementById("myCanvas") as HTMLCanvasElement | null;
-        if (c == null )
-            return;
-        
-        c.addEventListener("click", (event) => {
-            console.log("canvas has been clicked");
-            let xPos = event.pageX;
-            let yPos = event.pageY;
-            console.log("xPos , yPos: " , xPos, yPos);
-            this.clickEventDispatcher(xPos, yPos, this.gameState); 
-
-            
-        });
-    } 
-
-    clickEventDispatcher(xPos : number, yPos : number, gameState: GameState) {
-        switch(gameState) {
-            case GameState.MAIN_MENU: {
-                let objIden : ObjectIdentifier = this.gameObjPosition.checkIfObjectClicked(gameState, xPos, yPos);
-                
-                if (objIden == ObjectIdentifier.NEW_GAME_BUTTON) {
-                    this.gameState = GameState.GAME;
-                    this.board.createBoard();
-                    this.createViews();
-
-                } else if (objIden == ObjectIdentifier.CONTINUE_BUTTON) {
-                    this.gameState = GameState.GAME;
-                    this.createViews();
-                }
-
-                break;
-            } 
-
-        }
-    }
- 
-    createViews() {
-
-        switch(this.gameState) {
-            case GameState.MAIN_MENU:
-                this.createMainMenu();
-                break;
-
-            case GameState.GAME:
-                this.createGameBoard();
-                break;
-
-            case GameState.SETTINGS:
-                break;
-
-            case GameState.CLOSE:
-                break;
-
-            case GameState.HOW_TO_PLAY:
-                break; 
-        }
+    newGame() {
+        this.board.createBoard();
+        this.createGameBoard();
     }
 
     addKeyPressEvent() {
@@ -247,34 +105,6 @@ class Game {
     }
 
 
-    createMainMenu() {        
-        let c = document.getElementById("myCanvas") as HTMLCanvasElement | null;
-        let ctx  = c?.getContext("2d");
-        
-        if (ctx == null || c == null)
-            return;
-
-        ctx.clearRect(0, 0, c?.width, c?.height);
-
-        let pos = new ObjPos(10, 20, 330, 70, true, ObjectIdentifier.CONTINUE_BUTTON);
-        this.gameObjPosition.putItems(this.gameState, pos);
-        ctx.fillStyle = Colors.DARK_BUTTON_COLOR;
-        ctx.fillRect(10, 200, 330 , 70);
-
-        ctx.fillStyle = Colors.DARK_BUTTON_COLOR;
-        ctx.fillRect(10, 290, 330, 70);
-        
-        let pos1 = new ObjPos(10, 290, 330, 70, true, ObjectIdentifier.NEW_GAME_BUTTON);
-        this.gameObjPosition.putItems(this.gameState, pos1);
-
-        ctx.fillStyle = Colors.TEXT_LIGHT;
-        ctx.fillText(Constants.NEW_GAME, 40, 230);
-
-        ctx.fillStyle = Colors.TEXT_LIGHT;
-        ctx.fillText(Constants.CONTINUE, 40, 320); 
-    }
-
-
     createGameBoard() {
         let c = document.getElementById("myCanvas") as HTMLCanvasElement | null;
         let ctx  = c?.getContext("2d");
@@ -282,62 +112,39 @@ class Game {
         if (ctx == null)
             return;
 
-        
         ctx.clearRect(0, 0, c?.width!, c?.height!);
-
-        ctx.fillStyle = Colors.DARK_BUTTON_COLOR;
-        ctx.fillRect( 10, 10, 60, 60);
-
-        
-        ctx.fillStyle = Colors.TEXT_LIGHT;
-        ctx.fillText(Constants.SCORE, 10, 20);
-        ctx.fillText(this.board.score + "", 10, 30);
-
-        ctx.fillStyle = Colors.DARK_BUTTON_COLOR;
-        ctx.fillRect(10, 90, 60, 30);
-
-        ctx.fillStyle = Colors.YELLOW_BUTTON_COLOR;
-        ctx.fillRect(90, 10 , 120, 120);
-        
-        ctx.fillStyle = Colors.DARK_BUTTON_COLOR;
-        ctx.fillText(Constants.GAME_NAME, 120, 50);
-
-        ctx.fillStyle = Colors.DARK_BUTTON_COLOR;
-        ctx.fillRect(250, 10, 60, 60);
-
-        ctx.fillStyle = Colors.TEXT_LIGHT;
-        ctx.fillText(Constants.BEST, 250, 20);
-        ctx.fillText(this.board.maxScore + "", 250, 30);
-        
-        ctx.fillStyle = Colors.DARK_BUTTON_COLOR;
-        ctx.fillRect(250, 90, 60, 30);
-
-        ctx.fillText(Constants.GAME_MESSAGE, 30, 170);
-
         ctx.fillStyle = Colors.BOARD_BACKGROUND;
-        ctx.fillRect(10, 190, 330, 330);
+        ctx.fillRect(0, 0, 330, 330);
 
         let size = this.board.getBoardSize();
 
         let tileWidth = (330 - (2 * size + 1)) / size; 
 
         const MARGIN : number = 2;
-        const BOARD_X = 10;
-        const BOARD_Y = 190;
-        const TEXT_PAD_X = 5;
-        const TEXT_PAD_Y = 5;
+        const BOARD_X = 0;
+        const BOARD_Y = 0;
+        const TEXT_PAD_X = 10;
+        const TEXT_PAD_Y = 10;
 
 
         let prevTotYTileWidth = 0;
+
+        let tileColorArr : string[][] = Colors.colorTileArr;
+
+    
         for (let r = 0; r < size; r++) {
             let prevTotXTileWidth = 0;
             for (let c = 0; c < size; c++) {
-                ctx.fillStyle = "#222222";
-                ctx.fillRect(BOARD_X + MARGIN * (c + 1) + prevTotXTileWidth, BOARD_Y + MARGIN * (r + 1) + prevTotYTileWidth, tileWidth, tileWidth);
-
-                ctx.fillStyle = '#FFF';
                 const tileValue = this.board.getBoardValue(r, c);
+                let pickIndex = 0;
                 if (tileValue != this.board.INITIAL_VALUE) {
+                    pickIndex = Math.log2(tileValue);
+                }
+                ctx.fillStyle = tileColorArr[pickIndex][0];
+                ctx.fillRect(BOARD_X + MARGIN * (c + 1) + prevTotXTileWidth, BOARD_Y + MARGIN * (r + 1) + prevTotYTileWidth, tileWidth, tileWidth);
+                ctx.fillStyle = tileColorArr[pickIndex][1];
+                if (tileValue != this.board.INITIAL_VALUE) {
+                    ctx.font = "12px Arial";
                     ctx.fillText(tileValue + "", BOARD_X + MARGIN * (c + 1) + prevTotXTileWidth + TEXT_PAD_X,  BOARD_Y + MARGIN * (r + 1) + prevTotYTileWidth + TEXT_PAD_Y)
                 }
                 prevTotXTileWidth += tileWidth;
@@ -346,23 +153,6 @@ class Game {
         }
 
     }
-
-
-    createSettings() {
-
-
-    }
-
-    createClose() {
-
-
-    }
-
-
-    createHowToPlay() {
-
-    }
-
 }
 
 enum Move {
@@ -414,7 +204,6 @@ class Board {
 
 
     userMovement(move : Move) {
-
         switch(move) {
             case Move.LEFT:
                 this.leftAction(); 
@@ -432,13 +221,26 @@ class Board {
                 this.downAction();
                 break;
         }
+
         this.placeRandomValue();
+        this.updateScores();
         this.checkGameOver();
     }
 
+    updateScores() {
+        document.getElementById("score").innerText = this.score + "";
+        document.getElementById("best").innerHTML = this.maxScore + "";
+    }
+
     checkGameOver() {
-        if (this.noOfEmptyTile == 0)
-            console.log("Game Over!!!!");
+        if (this.score >= 2048 && this.noOfEmptyTile > 0) {
+            document.getElementById("result").innerText = "You Won!!!";
+        } else if (this.noOfEmptyTile == 0) {
+            document.getElementById("result").innerText = "No More Moves!!!";
+        } else {
+            document.getElementById("result").innerText = "";
+
+        }
 
     }
 
@@ -468,7 +270,15 @@ class Board {
         let boardIndex : number[] = emptyIndexArr[randomIndex];
         this.board[boardIndex[0]][boardIndex[1]] = 2;
 
-        this.noOfEmptyTile = emptyIndexArrSize - 1;
+        let tempMovesLeft = 0; 
+        
+        this.board.forEach(row => row.forEach(val => {
+            if (val == this.INITIAL_VALUE) {
+                tempMovesLeft++;
+            }
+        }));
+
+        this.noOfEmptyTile = tempMovesLeft;
     }
 
 
@@ -478,8 +288,6 @@ class Board {
             let headIndex : number = 0; // index identities the location of the currently processed grid[i][j]
             let c = 1;
             while (c < this.board[0].length) {
-                console.log("index: " , c);
-                console.log("headIndex", headIndex);
             //for (let c = 1; c < this.board[0].length; c++ ) {
                 let headVal = curRow[headIndex];
                 let curVal = curRow[c];
@@ -548,8 +356,6 @@ class Board {
             let r = 1;
             console.log("c: ", c);
             while (r < this.board.length) {
-                console.log("r: ", r);
-                console.log("headIndex: ", headIndex);
                 let curVal =  this.board[r][c];
                 let headVal = this.board[headIndex][c];
                 if (r <= headIndex) {
@@ -593,3 +399,10 @@ class Board {
 
 let game = new Game();
 game.initialize();
+
+
+
+function newGame() {
+    console.log("initiating new game");
+    game.newGame();
+}

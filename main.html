@@ -1,13 +1,35 @@
 <html> 
 
-
+    <head>
+        <link rel ="stylesheet" href = "styles.css">
+    </head>
 
     <body id = "body"> 
-        <canvas id = 'myCanvas' width = "350" height = "600" style="border:1px solid #000000;">
+        <div> 
+            <p class = "main-2048"> 2048 </p>
+        </div>
+    
+        <div class = "button-bar">
+            <div class = "score-block">
+                <p class = "score-banner"> SCORE </p>
+                <p class = "score-value" id = "score"> 0 </p>
+            </div>
+
+            <div class ="best-block">
+                <p class = "best-banner"> BEST </p>
+                <p class = "best-val" id = "best"> 0 </p>
+            </div>
+            
+            <button onclick = "newGame()"> New Game </button>
+        </div>
+
+        <canvas id = 'myCanvas' width = "350" height = "350">
         </canvas>
+
+        <p id = "result"></p>
     </body>
 
 
-    
     <script src = "game.js"></script>
+
 </html>
